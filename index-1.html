@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blox Fruits Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            background-color: #1a1a2e;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-container {
+            display: flex;
+            width: 100%;
+            gap: 20px;
+        }
+
+        .left-panel {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-panel {
+            width: 40%;
+        }
+
+        .panel {
+            background-color: #16213e;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        h1, h2, h3 {
+            color: #f8bb22;
+            margin-top: 0;
+        }
+
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .beli-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f8bb22;
+            margin-bottom: 20px;
+        }
+
+        .shop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        .shop-item:last-child {
+            border-bottom: none;
+        }
+
+        .fruit-emoji {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .fruit-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .shop-items {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .fruit-index {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .fruit-card {
+            background-color: #0f3460;
+            border-radius: 8px;
+            padding: 10px;
+            width: calc(33% - 10px);
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+        }
+
+        .rarity-common {
+            color: #1e90ff;
+        }
+
+        .rarity-uncommon {
+            color: #32cd32;
+        }
+
+        .rarity-rare {
+            color: #9370db;
+        }
+
+        .rarity-legendary {
+            color: #ff8c00;
+        }
+
+        .rarity-mythical {
+            color: #ff1493;
+        }
+
+        /* Shooter Game Styles */
+        #shooter-game {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background-color: #0a0a1a;
+            border: 2px solid #333;
+            overflow: hidden;
+        }
+
+        #player {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .enemy {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #ff3333;
+            border-radius: 50%;
+        }
+
+        .bullet {
+            position: absolute;
+            width: 8px;
+            height: 15px;
+            background-color: #ffff00;
+            border-radius: 4px;
+        }
+
+        #pause-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+        }
+
+        .cooldown {
+            background-color: #ff5555;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background-color: #0f3460;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+
+        .tab.active {
+            background-color: #16213e;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .controls-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="left-panel">
+            <div class="panel">
+                <h1>Blox Fruits Game</h1>
+                <div class="beli-display">Beli: <span id="beli-counter">0</span></div>
+                
+                <button id="get-beli-btn">Get Beli</button>
+                <button id="multiplier-btn">2x Beli Multiplier (Cost: 5,000 Beli)</button>
+                <button id="find-fruit-btn">Find Blox Fruit (Cost: 500 Beli)</button>
+                <button id="roll-fruit-btn">Roll Blox Fruit (Cost: 10,000 Beli)</button>
+                <button id="shop-btn">Shop</button>
+            </div>
+
+            <div class="panel">
+                <div class="tabs">
+                    <div class="tab active" data-tab="fruit-index">Fruit Index</div>
+                    <div class="tab" data-tab="shop">Shop</div>
+                </div>
+                
+                <div id="fruit-index" class="tab-content active">
+                    <h2>Your Fruits</h2>
+                    <div class="fruit-index" id="inventory">
+                        <!-- Fruits will appear here -->
+                    </div>
+                </div>
+                
+                <div id="shop" class="tab-content">
+                    <h2>Fruit Shop</h2>
+                    <p>Stock refreshes every 5 minutes</p>
+                    <div class="shop-items" id="shop-items">
+                        <!-- Shop items will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="panel">
+                <h2>Shooter Game</h2>
+                <div id="shooter-game">
+                    <button id="pause-btn">Pause</button>
+                    <div id="player"></div>
+                    <!-- Enemies and bullets will be added dynamically -->
+                </div>
+                <p>Kill enemies to earn 1,000 Beli each!</p>
+                <div class="controls-info">
+                    Controls: WASD or Arrow Keys to move, Space or Click to shoot
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game Data
+        const fruits = [
+            { name: "Bomb", emoji: "💣", rarity: "Common", price: 500 },
+            { name: "Spike", emoji: "🌵", rarity: "Common", price: 500 },
+            { name: "Chop", emoji: "✋", rarity: "Common", price: 500 },
+            { name: "Spring", emoji: "🌀", rarity: "Uncommon", price: 1500 },
+            { name: "Smoke", emoji: "💨", rarity: "Uncommon", price: 1500 },
+            { name: "Flame", emoji: "🔥", rarity: "Rare", price: 2500 },
+            { name: "Ice", emoji: "❄️", rarity: "Rare", price: 2500 },
+            { name: "Sand", emoji: "🏜️", rarity: "Rare", price: 2500 },
+            { name: "Dark", emoji: "🌑", rarity: "Legendary", price: 5000 },
+            { name: "Light", emoji: "☀️", rarity: "Legendary", price: 5000 },
+            { name: "Magma", emoji: "🌋", rarity: "Legendary", price: 5000 },
+            { name: "Quake", emoji: "🌊", rarity: "Legendary", price: 5000 },
+            { name: "Blizzard", emoji: "🌨️", rarity: "Legendary", price: 5000 },
+            { name: "Gravity", emoji: "🌌", rarity: "Mythical", price: 10000 },
+            { name: "Dough", emoji: "🍞", rarity: "Mythical", price: 10000 },
+            { name: "Shadow", emoji: "👤", rarity: "Mythical", price: 10000 },
+            { name: "Venom", emoji: "🐍", rarity: "Mythical", price: 10000 },
+            { name: "Control", emoji: "🌀", rarity: "Mythical", price: 10000 },
+            { name: "Spirit", emoji: "👻", rarity: "Mythical", price: 10000 },
+            { name: "Dragon", emoji: "🐉", rarity: "Mythical", price: 15000 },
+            { name: "Leopard", emoji: "🐆", rarity: "Mythical", price: 15000 },
+            { name: "Mammoth", emoji: "🦣", rarity: "Mythical", price: 15000 },
+            { name: "Sound", emoji: "🔊", rarity: "Mythical", price: 15000 },
+            { name: "Phoenix", emoji: "🦅", rarity: "Mythical", price: 15000 },
+            { name: "Rumble", emoji: "⚡", rarity: "Mythical", price: 15000 },
+            { name: "Pain", emoji: "💢", rarity: "Mythical", price: 15000 },
+            { name: "Blade", emoji: "⚔️", rarity: "Mythical", price: 15000 },
+            { name: "Gas", emoji: "⛽", rarity: "Mythical", price: 15000 },
+            { name: "Yeti", emoji: "🧊", rarity: "Mythical", price: 15000 },
+            { name: "Western Dragon", emoji: "🐲", rarity: "Mythical", price: 20000 },
+            { name: "Eastern Dragon", emoji: "🐉", rarity: "Mythical", price: 20000 }
+        ];
+
+        const rarityWeights = {
+            "Common": 50,
+            "Uncommon": 30,
+            "Rare": 15,
+            "Legendary": 4,
+            "Mythical": 1
+        };
+
+        // Game State
+        let beli = 0;
+        let multiplier = 1;
+        let inventory = [];
+        let shopStock = [];
+        let rollCooldown = false;
+        let gamePaused = false;
+        let enemies = [];
+        let bullets = [];
+        let lastEnemySpawn = 0;
+        let enemiesKilled = 0;
+        let shopRefreshTime = Date.now() + 300000; // 5 minutes
+        let playerSpeed = 5;
+        let keys = {
+            ArrowLeft: false,
+            ArrowRight: false,
+            a: false,
+            d: false
+        };
+
+        // DOM Elements
+        const beliCounter = document.getElementById('beli-counter');
+        const getBeliBtn = document.getElementById('get-beli-btn');
+        const multiplierBtn = document.getElementById('multiplier-btn');
+        const findFruitBtn = document.getElementById('find-fruit-btn');
+        const rollFruitBtn = document.getElementById('roll-fruit-btn');
+        const shopBtn = document.getElementById('shop-btn');
+        const inventoryContainer = document.getElementById('inventory');
+        const shopItemsContainer = document.getElementById('shop-items');
+        const shooterGame = document.getElementById('shooter-game');
+        const pauseBtn = document.getElementById('pause-btn');
+        const player = document.getElementById('player');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        // Initialize game
+        function init() {
+            updateBeliDisplay();
+            generateShopStock();
+            renderInventory();
+            renderShop();
+            setupEventListeners();
+            startShooterGame();
+            startShopTimer();
+        }
+
+        // Update beli display
+        function updateBeliDisplay() {
+            beliCounter.textContent = beli.toLocaleString();
+            
+            // Enable/disable buttons based on beli
+            findFruitBtn.disabled = beli < 500;
+            rollFruitBtn.disabled = beli < 10000 || rollCooldown;
+            multiplierBtn.disabled = beli < 5000;
+        }
+
+        // Generate random shop stock
+        function generateShopStock() {
+            shopStock = [];
+            const numItems = 5 + Math.floor(Math.random() * 3); // 5-7 items
+            
+            for (let i = 0; i < numItems; i++) {
+                const randomFruit = getRandomFruit();
+                shopStock.push(randomFruit);
+            }
+        }
+
+        // Get random fruit based on rarity weights
+        function getRandomFruit() {
+            const totalWeight = Object.values(rarityWeights).reduce((a, b) => a + b, 0);
+            let random = Math.random() * totalWeight;
+            
+            for (const [rarity, weight] of Object.entries(rarityWeights)) {
+                if (random < weight) {
+                    const fruitsOfRarity = fruits.filter(f => f.rarity === rarity);
+                    return fruitsOfRarity[Math.floor(Math.random() * fruitsOfRarity.length)];
+                }
+                random -= weight;
+            }
+            
+            // Fallback to common if something goes wrong
+            const commonFruits = fruits.filter(f => f.rarity === "Common");
+            return commonFruits[Math.floor(Math.random() * commonFruits.length)];
+        }
+
+        // Render inventory
+        function renderInventory() {
+            inventoryContainer.innerHTML = '';
+            
+            if (inventory.length === 0) {
+                inventoryContainer.innerHTML = '<p>No fruits collected yet!</p>';
+                return;
+            }
+            
+            // Group by rarity for better display
+            const grouped = {};
+            inventory.forEach(fruit => {
+                if (!grouped[fruit.rarity]) {
+                    grouped[fruit.rarity] = [];
+                }
+                grouped[fruit.rarity].push(fruit);
+            });
+            
+            // Display in order of rarity
+            const rarityOrder = ["Mythical", "Legendary", "Rare", "Uncommon", "Common"];
+            
+            rarityOrder.forEach(rarity => {
+                if (grouped[rarity]) {
+                    const rarityHeader = document.createElement('h3');
+                    rarityHeader.textContent = `${rarity} Fruits`;
+                    rarityHeader.className = `rarity-${rarity.toLowerCase()}`;
+                    inventoryContainer.appendChild(rarityHeader);
+                    
+                    grouped[rarity].forEach(fruit => {
+                        const fruitCard = document.createElement('div');
+                        fruitCard.className = 'fruit-card';
+                        fruitCard.innerHTML = `
+                            <span class="fruit-emoji">${fruit.emoji}</span>
+                            <div>
+                                <div>${fruit.name}</div>
+                                <div class="rarity-${fruit.rarity.toLowerCase()}">${fruit.rarity}</div>
+                            </div>
+                        `;
+                        inventoryContainer.appendChild(fruitCard);
+                    });
+                }
+            });
+        }
+
+        // Render shop
+        function renderShop() {
+            shopItemsContainer.innerHTML = '';
+            
+            shopStock.forEach((fruit, index) => {
+                const shopItem = document.createElement('div');
+                shopItem.className = 'shop-item';
+                shopItem.innerHTML = `
+                    <div class="fruit-info">
+                        <span class="fruit-emoji">${fruit.emoji}</span>
+                        <div>
+                            <div>${fruit.name}</div>
+                            <div class="rarity-${fruit.rarity.toLowerCase()}">${fruit.rarity}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <span>${fruit.price.toLocaleString()} Beli</span>
+                        <button class="purchase-btn" data-index="${index}">Purchase</button>
+                    </div>
+                `;
+                shopItemsContainer.appendChild(shopItem);
+            });
+            
+            // Add event listeners to purchase buttons
+            document.querySelectorAll('.purchase-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    purchaseFruit(index);
+                });
+            });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Beli buttons
+            getBeliBtn.addEventListener('click', earnBeli);
+            multiplierBtn.addEventListener('click', purchaseMultiplier);
+            findFruitBtn.addEventListener('click', findFruit);
+            rollFruitBtn.addEventListener('click', rollFruit);
+            shopBtn.addEventListener('click', () => switchTab('shop'));
+            
+            // Tab switching
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
+            
+            // Shooter game controls
+            shooterGame.addEventListener('click', shoot);
+            pauseBtn.addEventListener('click', togglePause);
+            
+            // Keyboard controls for shooter game
+            document.addEventListener('keydown', (e) => {
+                if (gamePaused) return;
+                
+                if (e.key === 'ArrowLeft' || e.key === 'a') {
+                    keys.ArrowLeft = true;
+                    keys.a = true;
+                } else if (e.key === 'ArrowRight' || e.key === 'd') {
+                    keys.ArrowRight = true;
+                    keys.d = true;
+                } else if (e.key === ' ') {
+                    shoot();
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'a') {
+                    keys.ArrowLeft = false;
+                    keys.a = false;
+                } else if (e.key === 'ArrowRight' || e.key === 'd') {
+                    keys.ArrowRight = false;
+                    keys.d = false;
+                }
+            });
+        }
+
+        // Switch between tabs
+        function switchTab(tabName) {
+            tabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabName) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            tabContents.forEach(content => {
+                if (content.id === tabName) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+        }
+
+        // Beli functions
+        function earnBeli() {
+            let amount = 100 * multiplier;
+            
+            // Random chance for bonus
+            const bonusChance = Math.random();
+            if (bonusChance < 0.01) { // 1% chance for 1000+ bonus
+                amount += 1000;
+            } else if (bonusChance < 0.1) { // 9% chance for 200+ bonus
+                amount += 200;
+            }
+            
+            beli += amount;
+            updateBeliDisplay();
+        }
+
+        function purchaseMultiplier() {
+            if (beli >= 5000) {
+                beli -= 5000;
+                multiplier *= 2;
+                multiplierBtn.textContent = `2x Beli Multiplier (Current: ${multiplier}x, Next: ${5000 * (multiplier / 2)} Beli)`;
+                updateBeliDisplay();
+            }
+        }
+
+        // Fruit functions
+        function findFruit() {
+            if (beli < 500) return;
+            
+            beli -= 500;
+            updateBeliDisplay();
+            
+            const fruit = getRandomFruit();
+            inventory.push(fruit);
+            renderInventory();
+            
+            alert(`You found a ${fruit.rarity} ${fruit.name} fruit! ${fruit.emoji}`);
+        }
+
+        function rollFruit() {
+            if (beli < 10000 || rollCooldown) return;
+            
+            beli -= 10000;
+            updateBeliDisplay();
+            
+            // Higher chance for better fruits when rolling
+            const boostedRarityWeights = {
+                "Common": 20,
+                "Uncommon": 25,
+                "Rare": 30,
+                "Legendary": 15,
+                "Mythical": 10
+            };
+            
+            const totalWeight = Object.values(boostedRarityWeights).reduce((a, b) => a + b, 0);
+            let random = Math.random() * totalWeight;
+            
+            let selectedRarity;
+            for (const [rarity, weight] of Object.entries(boostedRarityWeights)) {
+                if (random < weight) {
+                    selectedRarity = rarity;
+                    break;
+                }
+                random -= weight;
+            }
+            
+            const fruitsOfRarity = fruits.filter(f => f.rarity === selectedRarity);
+            const fruit = fruitsOfRarity[Math.floor(Math.random() * fruitsOfRarity.length)];
+            
+            inventory.push(fruit);
+            renderInventory();
+            
+            alert(`You rolled a ${fruit.rarity} ${fruit.name} fruit! ${fruit.emoji}`);
+            
+            // Set cooldown
+            rollCooldown = true;
+            rollFruitBtn.classList.add('cooldown');
+            rollFruitBtn.disabled = true;
+            
+            setTimeout(() => {
+                rollCooldown = false;
+                rollFruitBtn.classList.remove('cooldown');
+                updateBeliDisplay();
+            }, 120000); // 2 minutes
+        }
+
+        function purchaseFruit(index) {
+            const fruit = shopStock[index];
+            
+            if (beli >= fruit.price) {
+                beli -= fruit.price;
+                inventory.push(fruit);
+                updateBeliDisplay();
+                renderInventory();
+                
+                alert(`You purchased a ${fruit.rarity} ${fruit.name} fruit! ${fruit.emoji}`);
+            } else {
+                alert("Not enough Beli!");
+            }
+        }
+
+        // Shooter game functions
+        function startShooterGame() {
+            // Position player at the bottom center
+            const gameRect = shooterGame.getBoundingClientRect();
+            player.style.left = `${gameRect.width / 2 - 25}px`;
+            
+            gameLoop();
+        }
+
+        function gameLoop() {
+            if (gamePaused) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+            
+            const now = Date.now();
+            
+            // Move player based on key presses
+            movePlayer();
+            
+            // Spawn enemies
+            if (now - lastEnemySpawn > 1000) { // Every second
+                spawnEnemy();
+                lastEnemySpawn = now;
+            }
+            
+            // Move enemies
+            moveEnemies();
+            
+            // Move bullets
+            moveBullets();
+            
+            // Check collisions
+            checkCollisions();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        function movePlayer() {
+            const gameRect = shooterGame.getBoundingClientRect();
+            const playerRect = player.getBoundingClientRect();
+            const currentLeft = parseFloat(player.style.left) || 0;
+            
+            let newLeft = currentLeft;
+            
+            if (keys.ArrowLeft || keys.a) {
+                newLeft = Math.max(0, currentLeft - playerSpeed);
+            }
+            if (keys.ArrowRight || keys.d) {
+                newLeft = Math.min(gameRect.width - playerRect.width, currentLeft + playerSpeed);
+            }
+            
+            player.style.left = `${newLeft}px`;
+        }
+
+        function spawnEnemy() {
+            const enemy = document.createElement('div');
+            enemy.className = 'enemy';
+            
+            const x = Math.random() * (shooterGame.offsetWidth - 20);
+            enemy.style.left = `${x}px`;
+            enemy.style.top = '0px';
+            
+            shooterGame.appendChild(enemy);
+            enemies.push({
+                element: enemy,
+                x: x,
+                y: 0,
+                speed: 1 + Math.random() * 2
+            });
+        }
+
+        function moveEnemies() {
+            enemies.forEach(enemy => {
+                enemy.y += enemy.speed;
+                enemy.element.style.top = `${enemy.y}px`;
+                
+                // Remove if out of bounds
+                if (enemy.y > shooterGame.offsetHeight) {
+                    shooterGame.removeChild(enemy.element);
+                    enemies = enemies.filter(e => e !== enemy);
+                }
+            });
+        }
+
+        function shoot() {
+            if (gamePaused) return;
+            
+            const playerRect = player.getBoundingClientRect();
+            const gameRect = shooterGame.getBoundingClientRect();
+            
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet';
+            
+            const startX = playerRect.left - gameRect.left + playerRect.width / 2 - 4;
+            const startY = playerRect.top - gameRect.top;
+            
+            bullet.style.left = `${startX}px`;
+            bullet.style.top = `${startY}px`;
+            
+            shooterGame.appendChild(bullet);
+            bullets.push({
+                element: bullet,
+                x: startX,
+                y: startY,
+                speed: 5
+            });
+        }
+
+        function moveBullets() {
+            bullets.forEach(bullet => {
+                bullet.y -= bullet.speed;
+                bullet.element.style.top = `${bullet.y}px`;
+                
+                // Remove if out of bounds
+                if (bullet.y < 0) {
+                    shooterGame.removeChild(bullet.element);
+                    bullets = bullets.filter(b => b !== bullet);
+                }
+            });
+        }
+
+        function checkCollisions() {
+            bullets.forEach(bullet => {
+                enemies.forEach(enemy => {
+                    const bulletRect = bullet.element.getBoundingClientRect();
+                    const enemyRect = enemy.element.getBoundingClientRect();
+                    
+                    if (
+                        bulletRect.left < enemyRect.right &&
+                        bulletRect.right > enemyRect.left &&
+                        bulletRect.top < enemyRect.bottom &&
+                        bulletRect.bottom > enemyRect.top
+                    ) {
+                        // Collision detected
+                        shooterGame.removeChild(bullet.element);
+                        shooterGame.removeChild(enemy.element);
+                        
+                        bullets = bullets.filter(b => b !== bullet);
+                        enemies = enemies.filter(e => e !== enemy);
+                        
+                        enemiesKilled++;
+                        beli += 1000;
+                        updateBeliDisplay();
+                    }
+                });
+            });
+        }
+
+        function togglePause() {
+            gamePaused = !gamePaused;
+            pauseBtn.textContent = gamePaused ? 'Resume' : 'Pause';
+        }
+
+        // Shop timer
+        function startShopTimer() {
+            setInterval(() => {
+                generateShopStock();
+                renderShop();
+                shopRefreshTime = Date.now() + 300000; // Reset timer
+                
+                // Show notification
+                const notification = document.createElement('div');
+                notification.textContent = 'Shop stock has refreshed!';
+                notification.style.position = 'fixed';
+                notification.style.bottom = '20px';
+                notification.style.right = '20px';
+                notification.style.backgroundColor = '#4CAF50';
+                notification.style.color = 'white';
+                notification.style.padding = '10px';
+                notification.style.borderRadius = '5px';
+                notification.style.zIndex = '1000';
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 3000);
+            }, 300000); // 5 minutes
+        }
+
+        // Initialize the game
+        init();
+    </script>
+</body>
+</html>
